@@ -95,7 +95,11 @@
   <ul id="entries"></ul>
 
 <script>
+
+const BASE_URL = "https://recruitroute-backend.onrender.com";
 let weeklyChart;
+
+// ---------------- SAVE ENTRY ----------------
 async function saveEntry() {
   const entry = {
     date: document.getElementById("date").value,
@@ -110,16 +114,14 @@ async function saveEntry() {
   }
 
   try {
-    const response = await fetch("http://localhost:5000/add", {
+    const response = await fetch(`${BASE_URL}/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(entry)
     });
 
-    const result = await response.text();
-    console.log(result);
+    if (!response.ok) throw new Error("Backend error");
 
-    // clear form
     document.getElementById("date").value = "";
     document.getElementById("problems").value = "";
     document.getElementById("hours").value = "";
@@ -129,220 +131,128 @@ async function saveEntry() {
 
   } catch (error) {
     console.error("Error saving entry:", error);
-    alert("Server not responding. Is backend running?");
+    alert("Backend not responding. Please wait 30 seconds and refresh.");
   }
 }
 
+// ---------------- LOAD ENTRIES ----------------
 async function loadEntries() {
-  const res = await fetch("http://localhost:5000/entries");
-  const data = await res.json();
+  try {
+    const res = await fetch(`${BASE_URL}/entries`);
+    if (!res.ok) throw new Error("Backend error");
 
-  // ---- FILTER SETUP ----
-  const selectedTopic = document.getElementById("topicFilter").value;
+    const data = await res.json();
 
-  const topicSet = new Set(data.map(item => item.topic));
-  const filterDropdown = document.getElementById("topicFilter");
+    const selectedTopic = document.getElementById("topicFilter").value;
+    const topicSet = new Set(data.map(item => item.topic));
+    const filterDropdown = document.getElementById("topicFilter");
 
-  filterDropdown.innerHTML = '<option value="All">All</option>';
+    filterDropdown.innerHTML = '<option value="All">All</option>';
 
-  topicSet.forEach(topic => {
-    const option = document.createElement("option");
-    option.value = topic;
-    option.textContent = topic;
-    filterDropdown.appendChild(option);
-  });
+    topicSet.forEach(topic => {
+      const option = document.createElement("option");
+      option.value = topic;
+      option.textContent = topic;
+      filterDropdown.appendChild(option);
+    });
 
-  filterDropdown.value = selectedTopic;
-  const list = document.getElementById("entries");
-  list.innerHTML = "";
+    filterDropdown.value = selectedTopic;
 
-  let totalProblems = 0;
-  let totalHours = 0;
-  let weeklyProblems = 0;
-  let weeklyHours = 0;
-  let monthlyProblems = 0;
-  let monthlyHours = 0;
+    const list = document.getElementById("entries");
+    list.innerHTML = "";
 
-  const today = new Date();
-  const firstDayOfWeek = new Date(today);
-  firstDayOfWeek.setDate(today.getDate() - today.getDay()); 
-  firstDayOfWeek.setHours(0,0,0,0);
+    let totalProblems = 0;
+    let totalHours = 0;
+    let weeklyProblems = 0;
+    let weeklyHours = 0;
+    let monthlyProblems = 0;
+    let monthlyHours = 0;
 
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+    const today = new Date();
+    const firstDayOfWeek = new Date(today);
+    firstDayOfWeek.setDate(today.getDate() - today.getDay());
+    firstDayOfWeek.setHours(0,0,0,0);
 
-  const uniqueDates = new Set();
-  const topicCount = {};
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
-  data.forEach(item => {
-    // ---- FILTER CONDITION ----
-    if (selectedTopic !== "All" && item.topic !== selectedTopic) {
-      return;
-    }
+    const uniqueDates = new Set();
+    const topicCount = {};
 
-    totalProblems += parseInt(item.problems);
-    totalHours += parseFloat(item.hours);
+    data.forEach(item => {
 
-    uniqueDates.add(item.date);
+      if (selectedTopic !== "All" && item.topic !== selectedTopic) return;
 
-    const entryDate = new Date(item.date);
+      totalProblems += parseInt(item.problems);
+      totalHours += parseFloat(item.hours);
 
-    if (entryDate >= firstDayOfWeek) {
-      weeklyProblems += parseInt(item.problems);
-      weeklyHours += parseFloat(item.hours);
-    }
+      uniqueDates.add(item.date);
+      const entryDate = new Date(item.date);
 
-    if (
-      entryDate.getMonth() === currentMonth &&
-      entryDate.getFullYear() === currentYear
-    ) {
-      monthlyProblems += parseInt(item.problems);
-      monthlyHours += parseFloat(item.hours);
-    }
-
-    // Count topics
-    if (topicCount[item.topic]) {
-      topicCount[item.topic]++;
-    } else {
-      topicCount[item.topic] = 1;
-    }
-
-    const li = document.createElement("li");
-    li.innerHTML = `
-      ${item.date} - ${item.problems} problems - ${item.topic}
-      <button onclick="deleteEntry('${item._id}')">Delete</button>    `;
-    list.appendChild(li);
-  });
-
-  document.getElementById("totalProblems").textContent = totalProblems;
-  document.getElementById("totalHours").textContent = totalHours;
-
-  const avg = uniqueDates.size > 0
-    ? (totalProblems / uniqueDates.size).toFixed(2)
-    : 0;
-
-  document.getElementById("avgProblems").textContent = avg;
-
-  // Find most studied topic
-  let maxCount = 0;
-  let mostStudied = "None";
-
-  for (let topic in topicCount) {
-    if (topicCount[topic] > maxCount) {
-      maxCount = topicCount[topic];
-      mostStudied = topic;
-    }
-  }
-
-  document.getElementById("topTopic").textContent = mostStudied;
-  document.getElementById("studyDays").textContent = uniqueDates.size;
-
-  // --- STREAK LOGIC ---
-  const sortedDates = Array.from(uniqueDates).sort();
-
-  // convert to Date objects
-  const dateObjects = sortedDates.map(date => new Date(date));
-
-  let streak = 0;
-
-  if (dateObjects.length > 0) {
-    streak = 1;
-
-    for (let i = dateObjects.length - 1; i > 0; i--) {
-      const diff =
-        (dateObjects[i] - dateObjects[i - 1]) / (1000 * 60 * 60 * 24);
-
-      if (diff === 1) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-  }
-
-  document.getElementById("currentStreak").textContent = streak;
-
-  // --- LONGEST STREAK LOGIC ---
-  let longest = 0;
-  let tempStreak = 1;
-
-  if (dateObjects.length > 0) {
-    longest = 1;
-
-    for (let i = 1; i < dateObjects.length; i++) {
-      const diff =
-        (dateObjects[i] - dateObjects[i - 1]) / (1000 * 60 * 60 * 24);
-
-      if (diff === 1) {
-        tempStreak++;
-      } else {
-        tempStreak = 1;
+      if (entryDate >= firstDayOfWeek) {
+        weeklyProblems += parseInt(item.problems);
+        weeklyHours += parseFloat(item.hours);
       }
 
-      if (tempStreak > longest) {
-        longest = tempStreak;
+      if (
+        entryDate.getMonth() === currentMonth &&
+        entryDate.getFullYear() === currentYear
+      ) {
+        monthlyProblems += parseInt(item.problems);
+        monthlyHours += parseFloat(item.hours);
+      }
+
+      topicCount[item.topic] = (topicCount[item.topic] || 0) + 1;
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${item.date} - ${item.problems} problems - ${item.topic}
+        <button onclick="deleteEntry('${item._id}')">Delete</button>
+      `;
+      list.appendChild(li);
+    });
+
+    document.getElementById("totalProblems").textContent = totalProblems;
+    document.getElementById("totalHours").textContent = totalHours;
+    document.getElementById("studyDays").textContent = uniqueDates.size;
+
+    const avg = uniqueDates.size
+      ? (totalProblems / uniqueDates.size).toFixed(2)
+      : 0;
+
+    document.getElementById("avgProblems").textContent = avg;
+
+    let maxCount = 0;
+    let mostStudied = "None";
+
+    for (let topic in topicCount) {
+      if (topicCount[topic] > maxCount) {
+        maxCount = topicCount[topic];
+        mostStudied = topic;
       }
     }
+
+    document.getElementById("topTopic").textContent = mostStudied;
+
+  } catch (error) {
+    console.error("Error loading entries:", error);
   }
-
-  document.getElementById("longestStreak").textContent = longest;
-  document.getElementById("weeklyProblems").textContent = weeklyProblems;
-  document.getElementById("weeklyHours").textContent = weeklyHours;
-  document.getElementById("monthlyProblems").textContent = monthlyProblems;
-  document.getElementById("monthlyHours").textContent = monthlyHours;
-
-  // ---- PRODUCTIVITY SCORE ----
-  const productivityScore =
-    (parseFloat(avg) * streak) +
-    (weeklyProblems / 2);
-
-  document.getElementById("productivityScore").textContent =
-    productivityScore.toFixed(2);
-
-  // ---- WEEKLY CHART DATA ----
-  const weekData = [0, 0, 0, 0, 0, 0, 0]; // Sun–Sat
-
-  data.forEach(item => {
-
-    if (selectedTopic !== "All" && item.topic !== selectedTopic) {
-      return;
-    }
-
-    const entryDate = new Date(item.date);
-
-    if (entryDate >= firstDayOfWeek) {
-      const dayIndex = entryDate.getDay();
-      weekData[dayIndex] += parseInt(item.problems);
-    }
-  });
-
-  const ctx = document.getElementById("weeklyChart").getContext("2d");
-
-  if (weeklyChart) {
-    weeklyChart.destroy();
-  }
-
-  weeklyChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-      datasets: [{
-        label: "Problems Solved",
-        data: weekData
-      }]
-    }
-  });
 }
 
+// ---------------- DELETE ----------------
 async function deleteEntry(id) {
-  await fetch(`http://localhost:5000/delete/${id}`, {
-    method: "DELETE"
-  });
-
-  loadEntries();
+  try {
+    await fetch(`${BASE_URL}/delete/${id}`, {
+      method: "DELETE"
+    });
+    loadEntries();
+  } catch (error) {
+    console.error("Error deleting:", error);
+  }
 }
 
 loadEntries();
+
 </script>
 
 </body>
