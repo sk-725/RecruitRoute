@@ -6,10 +6,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="page-container"></div>
-  <h2>Placement Tracker Dashboard</h2>
+  <div class="bg-blob blob1"></div>
+  <div class="bg-blob blob2"></div>
+  <div class="bg-blob blob3"></div>
+  
+  <div class="page-container">
+  <div class="header reveal">
+    <h2>Placement Tracker Dashboard</h2>
+    <p class="subtitle">Track your preparation. Measure your growth.</p>
+  </div>
 
-  <div class="form-section">
+  <div class="form-section reveal">    
     <input type="date" id="date"><br><br>
     <input id="problems" placeholder="Problems Solved"><br><br>
     <input id="hours" placeholder="Hours Studied"><br><br>
@@ -24,8 +31,7 @@
   </div>
 
   <!-- DASHBOARD CARDS -->
-  <div class="dashboard">
-
+  <div class="dashboard reveal">
     <div class="card">
       <h4>Total Problems</h4>
       <p id="totalProblems">0</p>
@@ -88,11 +94,17 @@
 
   </div>
 
-  <h3>Weekly Problems Chart</h3>
-  <canvas id="weeklyChart" width="600" height="250"></canvas>
+  <div class="chart-section reveal">
+    <h3>Weekly Performance</h3>
+    <div class="chart-card">
+      <canvas id="weeklyChart"></canvas>
+    </div>
+  </div>
 
-  <h3>Saved Entries</h3>
-  <ul id="entries"></ul>
+  <div class="entries-section reveal">
+    <h3>Saved Entries</h3>
+    <ul id="entries"></ul>
+  </div>
 
 <script>
 
@@ -283,8 +295,9 @@ async function loadEntries() {
     const productivityScore =
       (parseFloat(avg) * streak) + (weeklyProblems / 2);
 
-    document.getElementById("productivityScore").textContent =
-      productivityScore.toFixed(2);
+    document.getElementById("productivityScore").textContent = productivityScore.toFixed(2);
+
+    animateCounters();
 
     // ----- WEEKLY CHART -----
     const weekData = [0, 0, 0, 0, 0, 0, 0];
@@ -330,6 +343,44 @@ async function deleteEntry(id) {
   } catch (error) {
     console.error("Error deleting:", error);
   }
+}
+
+// -------- Scroll Reveal --------
+const reveals = document.querySelectorAll(".reveal");
+
+window.addEventListener("scroll", () => {
+  reveals.forEach(el => {
+    const windowHeight = window.innerHeight;
+    const elementTop = el.getBoundingClientRect().top;
+
+    if (elementTop < windowHeight - 100) {
+      el.classList.add("active");
+    }
+  });
+});
+
+// -------- Counter Animation --------
+function animateCounters() {
+  const counters = document.querySelectorAll(".card p");
+
+  counters.forEach(counter => {
+    const target = +counter.textContent;
+    let count = 0;
+
+    const increment = target / 50;
+
+    const updateCount = () => {
+      count += increment;
+      if (count < target) {
+        counter.textContent = count.toFixed(1);
+        requestAnimationFrame(updateCount);
+      } else {
+        counter.textContent = target;
+      }
+    };
+
+    updateCount();
+  });
 }
 
 loadEntries();

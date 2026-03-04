@@ -1,9 +1,10 @@
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #f3e8ff, #e9d5ff, #f5f3ff);
-  background-attachment: fixed;
+  background: #f8fafc;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
 h2 {
@@ -71,8 +72,22 @@ button:hover {
 
 /* ---------------- HEADER ---------------- */
 .header {
+  position: relative;
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 60px;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(167,139,250,0.25), transparent 70%);
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+  filter: blur(40px);
 }
 
 .header h2 {
@@ -191,4 +206,56 @@ button:hover {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+}
+
+/* -------- Floating Blobs -------- */
+
+.bg-blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: -1;
+  opacity: 0.4;
+  animation: floatBlob 20s infinite alternate ease-in-out;
+}
+
+.blob1 {
+  width: 300px;
+  height: 300px;
+  background: #c4b5fd;
+  top: -100px;
+  left: -100px;
+}
+
+.blob2 {
+  width: 400px;
+  height: 400px;
+  background: #a5b4fc;
+  bottom: -150px;
+  right: -150px;
+}
+
+.blob3 {
+  width: 250px;
+  height: 250px;
+  background: #ddd6fe;
+  top: 40%;
+  left: 60%;
+}
+
+@keyframes floatBlob {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-40px) scale(1.05); }
+  100% { transform: translateY(20px) scale(0.95); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
 }
