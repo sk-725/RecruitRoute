@@ -139,11 +139,10 @@ async function saveEntry() {
 async function loadEntries() {
   try {
     const res = await fetch(`${BASE_URL}/entries`);
-    if (!res.ok) throw new Error("Backend error");
-
     const data = await res.json();
 
     const selectedTopic = document.getElementById("topicFilter").value;
+
     const topicSet = new Set(data.map(item => item.topic));
     const filterDropdown = document.getElementById("topicFilter");
 
@@ -187,6 +186,7 @@ async function loadEntries() {
       totalHours += parseFloat(item.hours);
 
       uniqueDates.add(item.date);
+
       const entryDate = new Date(item.date);
 
       if (entryDate >= firstDayOfWeek) {
@@ -214,13 +214,14 @@ async function loadEntries() {
 
     document.getElementById("totalProblems").textContent = totalProblems;
     document.getElementById("totalHours").textContent = totalHours;
-    document.getElementById("studyDays").textContent = uniqueDates.size;
 
     const avg = uniqueDates.size
       ? (totalProblems / uniqueDates.size).toFixed(2)
       : 0;
 
     document.getElementById("avgProblems").textContent = avg;
+
+    document.getElementById("studyDays").textContent = uniqueDates.size;
 
     let maxCount = 0;
     let mostStudied = "None";
@@ -233,6 +234,86 @@ async function loadEntries() {
     }
 
     document.getElementById("topTopic").textContent = mostStudied;
+
+    // ----- STREAK -----
+    const sortedDates = Array.from(uniqueDates).sort();
+    const dateObjects = sortedDates.map(date => new Date(date));
+
+    let streak = 0;
+
+    if (dateObjects.length > 0) {
+      streak = 1;
+
+      for (let i = dateObjects.length - 1; i > 0; i--) {
+        const diff =
+          (dateObjects[i] - dateObjects[i - 1]) / (1000 * 60 * 60 * 24);
+
+        if (diff === 1) streak++;
+        else break;
+      }
+    }
+
+    document.getElementById("currentStreak").textContent = streak;
+
+    // ----- LONGEST STREAK -----
+    let longest = 0;
+    let tempStreak = 1;
+
+    if (dateObjects.length > 0) {
+      longest = 1;
+
+      for (let i = 1; i < dateObjects.length; i++) {
+        const diff =
+          (dateObjects[i] - dateObjects[i - 1]) / (1000 * 60 * 60 * 24);
+
+        if (diff === 1) tempStreak++;
+        else tempStreak = 1;
+
+        if (tempStreak > longest) longest = tempStreak;
+      }
+    }
+
+    document.getElementById("longestStreak").textContent = longest;
+
+    document.getElementById("weeklyProblems").textContent = weeklyProblems;
+    document.getElementById("weeklyHours").textContent = weeklyHours;
+    document.getElementById("monthlyProblems").textContent = monthlyProblems;
+    document.getElementById("monthlyHours").textContent = monthlyHours;
+
+    const productivityScore =
+      (parseFloat(avg) * streak) + (weeklyProblems / 2);
+
+    document.getElementById("productivityScore").textContent =
+      productivityScore.toFixed(2);
+
+    // ----- WEEKLY CHART -----
+    const weekData = [0, 0, 0, 0, 0, 0, 0];
+
+    data.forEach(item => {
+      if (selectedTopic !== "All" && item.topic !== selectedTopic) return;
+
+      const entryDate = new Date(item.date);
+
+      if (entryDate >= firstDayOfWeek) {
+        const dayIndex = entryDate.getDay();
+        weekData[dayIndex] += parseInt(item.problems);
+      }
+    });
+
+    const ctx = document.getElementById("weeklyChart").getContext("2d");
+
+    if (weeklyChart) weeklyChart.destroy();
+
+    weeklyChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+        datasets: [{
+          label: "Problems Solved",
+          data: weekData
+        }]
+      }
+    });
 
   } catch (error) {
     console.error("Error loading entries:", error);
