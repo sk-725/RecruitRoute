@@ -70,3 +70,77 @@ button:hover {
 ul {
   margin-top: 10px;
 }
+
+/* ---------------- HEADER ---------------- */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.subtitle {
+  margin-top: 8px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* ---------------- CHART ---------------- */
+.chart-section {
+  margin-bottom: 50px;
+}
+
+.chart-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.06);
+}
+
+.chart-card canvas {
+  max-height: 300px;
+}
+
+/* ---------------- ENTRIES ---------------- */
+.entries-section {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.06);
+  margin-bottom: 50px;
+}
+
+.entries-section h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+#entries li {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------------- FORM LAYOUT IMPROVEMENT ---------------- */
+.form-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-section button {
+  grid-column: span 2;
+}
+
+.form-section label,
+.form-section select {
+  grid-column: span 2;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
+@media (max-width: 768px) {
+  .form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .form-section button {
+    grid-column: span 1;
+  }
+}
