@@ -33,62 +33,98 @@
   <!-- DASHBOARD CARDS -->
   <div class="dashboard reveal">
     <div class="card">
-      <h4>Total Problems</h4>
+      <h4>
+        Total Problems
+        <span class="metric-info" data-info="Total number of coding problems solved across all study days.">ⓘ</span>
+      </h4>
       <p id="totalProblems">0</p>
     </div>
 
     <div class="card">
-      <h4>Total Hours</h4>
+      <h4>
+        Total Hours
+        <span class="metric-info" data-info="Total number of hours spent studying.">ⓘ</span>
+      </h4>
       <p id="totalHours">0</p>
     </div>
 
     <div class="card">
-      <h4>Average / Day</h4>
+      <h4>
+        Average / Day
+        <span class="metric-info" data-info="Average number of problems solved per study day.">ⓘ</span>
+      </h4>
       <p id="avgProblems">0</p>
     </div>
 
     <div class="card">
-      <h4>Most Studied Topic</h4>
+      <h4>
+        Most Studied Topic
+        <span class="metric-info" data-info="Topic that appears most frequently in your study entries.">ⓘ</span>
+      </h4>
       <p id="topTopic">None</p>
     </div>
 
     <div class="card">
-      <h4>Total Study Days</h4>
+      <h4>
+        Total Study Days
+        <span class="metric-info" data-info="Total number of unique days you logged study activity.">ⓘ</span>
+      </h4>
       <p id="studyDays">0</p>
     </div>
 
     <div class="card">
-      <h4>Current Streak 🔥</h4>
+      <h4>
+        Current Streak 🔥        
+        <span class="metric-info" data-info="Number of consecutive days you studied without missing a day.">ⓘ</span>
+      </h4>
       <p id="currentStreak">0</p>
     </div>
 
     <div class="card">
-      <h4>Longest Streak </h4>
+      <h4>
+        Longest Streak 
+        <span class="metric-info" data-info="Highest number of consecutive study days achieved so far.">ⓘ</span>
+      </h4>
       <p id="longestStreak">0</p>
     </div>
 
     <div class="card">
-      <h4>This Week Problems</h4>
+      <h4>
+        This Week Problems
+        <span class="metric-info" data-info="Problems solved during the current week.">ⓘ</span>
+      </h4>
       <p id="weeklyProblems">0</p>
     </div>
 
     <div class="card">
-      <h4>This Week Hours</h4>
+      <h4>
+        This Week Hours
+        <span class="metric-info" data-info="Hours studied during the current week.">ⓘ</span>
+      </h4>
       <p id="weeklyHours">0</p>
     </div>
 
     <div class="card">
-      <h4>This Month Problems</h4>
+      <h4>
+        This Month Problems
+        <span class="metric-info" data-info="Problems solved during the current month.">ⓘ</span>
+      </h4>
       <p id="monthlyProblems">0</p>
     </div>
 
     <div class="card">
-      <h4>This Month Hours</h4>
+      <h4>
+        This Month Hours
+        <span class="metric-info" data-info="Hours studied during the current month.">ⓘ</span>
+      </h4>
       <p id="monthlyHours">0</p>
     </div>
 
     <div class="card">
-      <h4>Productivity Score </h4>
+      <h4>
+        Productivity Score 
+        <span class="metric-info" data-info="Composite score combining average performance, streak, and weekly effort.">ⓘ</span>
+      </h4>
       <p id="productivityScore">0</p>
     </div>
 
@@ -214,7 +250,9 @@ async function loadEntries() {
         monthlyHours += parseFloat(item.hours);
       }
 
-      topicCount[item.topic] = (topicCount[item.topic] || 0) + 1;
+      if(item.topic && item.topic.trim() !== ""){
+        topicCount[item.topic] = (topicCount[item.topic] || 0) + 1;
+      }
 
       const li = document.createElement("li");
       li.innerHTML = `
@@ -239,7 +277,7 @@ async function loadEntries() {
     let mostStudied = "None";
 
     for (let topic in topicCount) {
-      if (topicCount[topic] > maxCount) {
+      if (topicCount[topic] > maxCount && topic !== "undefined") {
         maxCount = topicCount[topic];
         mostStudied = topic;
       }
@@ -382,6 +420,28 @@ function animateCounters() {
     updateCount();
   });
 }
+
+// METRIC INFO TOOLTIP
+document.addEventListener("click", function(e){
+
+  if(e.target.classList.contains("metric-info")){
+
+    const existing = document.querySelector(".metric-tooltip");
+    if(existing) existing.remove();
+
+    const tooltip = document.createElement("div");
+    tooltip.className = "metric-tooltip";
+    tooltip.innerText = e.target.dataset.info;
+
+    e.target.appendChild(tooltip);
+  }
+
+  else{
+    const existing = document.querySelector(".metric-tooltip");
+    if(existing) existing.remove();
+  }
+
+});
 
 loadEntries();
 

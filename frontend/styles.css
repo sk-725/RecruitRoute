@@ -267,3 +267,28 @@ button:hover {
   opacity: 1;
   transform: translateY(0);
 }
+
+.metric-info {
+  font-size: 14px;
+  margin-left: 6px;
+  cursor: pointer;
+  color: #8b5cf6;
+  position: relative;
+}
+
+.metric-info:hover {
+  color: #4c1d95;
+}
+
+.metric-tooltip {
+  position: absolute;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  width: 220px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  top: 24px;
+  left: 0;
+  z-index: 20;
+}
